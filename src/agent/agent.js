@@ -59,12 +59,36 @@ export class Agent {
             console.log(this.name, 'logged in!');
             serverProxy.login();
             
-            // Set skin for profile, requires Fabric Tailor. (https://modrinth.com/mod/fabrictailor)
-            if (this.prompter.profile.skin)
-                this.bot.chat(`/skin set URL ${this.prompter.profile.skin.model} ${this.prompter.profile.skin.path}`);
-            else
+            // Set skin for profile, supports Fabric Tailor and SkinRestorer (Forge)
+            // Fabric Tailor: /skin set URL <model> <url>
+            // SkinRestorer: /skin set web (classic|slim) "<url>" (URL must be in double quotes!)
+            if (this.prompter.profile.skin) {
+                let skinPath = this.prompter.profile.skin.path;
+                
+                // Convert local file paths to file:// URLs
+                if (skinPath && !skinPath.startsWith('http://') && !skinPath.startsWith('https://') && !skinPath.startsWith('file://')) {
+                    // Check if it's a local file path (Windows: C:\, D:\, etc. or Unix: /)
+                    if (skinPath.match(/^[A-Za-z]:[\\\/]/) || skinPath.startsWith('/')) {
+                        // Convert to file:// URL
+                        skinPath = 'file:///' + skinPath.replace(/\\/g, '/');
+                        console.log(`Converted local skin path to: ${skinPath}`);
+                    } else {
+                        console.warn(`Skin path "${skinPath}" doesn't look like a valid URL or local path. Make sure it's a direct HTTP/HTTPS URL to a PNG file.`);
+                    }
+                }
+
+                // SkinRestorer (Forge) command format: /skin set web (classic|slim) "<url>"
+                // The URL MUST be in double quotes according to the documentation
+                const skinModel = this.prompter.profile.skin.model || 'classic'; // default to classic
+                const skinCommand = `/skin set web ${skinModel} "${skinPath}"`;
+                console.log(`[${this.name}] Executing SkinRestorer command: ${skinCommand}`);
+                this.bot.chat(skinCommand);
+            } else {
+                console.log(`[${this.name}] No skin configured, clearing skin.`);
                 this.bot.chat(`/skin clear`);
+            }
         });
+
 		const spawnTimeoutDuration = settings.spawn_timeout;
         const spawnTimeout = setTimeout(() => {
             console.error(`Bot has not spawned after ${spawnTimeoutDuration} seconds. Exiting.`);

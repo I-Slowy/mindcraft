@@ -1,6 +1,13 @@
 {
-    "name": "andy",
+    "name": "Subaru",
 
-    "model": "gpt-5-nano"
+    "model": "gpt-4.1-mini-2025-04-14",
+
+    "speak_model": "system",
+
+    "skin": {
+        "model": "classic",
+        "path": "https://t.novaskin.me/c0cfa05d6b16d4caea1dd04bf32a75ee6ba02f934dcd5ef1cb8b09a3a8155b66"
+    }
 
 }
