@@ -35,7 +35,7 @@ export class VisionInterpreter {
 
         }
 
-        return result + `Image analysis: "${await this.analyzeImage(filename)}"`;
+        return result + `Análise de imagem: "${await this.analyzeImage(filename)}"`;
     }
 
     async lookAtPosition(x, y, z) {
@@ -49,7 +49,7 @@ export class VisionInterpreter {
 
         let filename = await this.camera.capture();
 
-        return result + `Image analysis: "${await this.analyzeImage(filename)}"`;
+        return result + `Análise de imagem: "${await this.analyzeImage(filename)}"`;
     }
 
     getCenterBlockInfo() {

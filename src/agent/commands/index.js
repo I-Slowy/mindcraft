@@ -240,16 +240,16 @@ export function getCommandDocs(agent) {
         'BlockOrItemName':   'string',
         'boolean':           'bool'
     }
-    let docs = `\n*COMMAND DOCS\n You can use the following commands to perform actions and get information about the world. 
-    Use the commands with the syntax: !commandName or !commandName("arg1", 1.2, ...) if the command takes arguments.\n
-    Do not use codeblocks. Use double quotes for strings. Only use one command in each response, trailing commands and comments will be ignored.\n`;
+    let docs = `\n*DOCUMENTAÇÃO DE COMANDOS\n Você pode usar os seguintes comandos para realizar ações e obter informações sobre o mundo. 
+    Use os comandos com a sintaxe: !commandName ou !commandName("arg1", 1.2, ...) se o comando receber argumentos.\n
+    Não use blocos de código. Use aspas duplas para strings. Use apenas um comando em cada resposta, comandos e comentários subsequentes serão ignorados.\n`;
     for (let command of commandList) {
         if (agent.blocked_actions.includes(command.name)) {
             continue;
         }
         docs += command.name + ': ' + command.description + '\n';
         if (command.params) {
-            docs += 'Params:\n';
+            docs += 'Parâmetros:\n';
             for (let param in command.params) {
                 docs += `${param}: (${typeTranslations[command.params[param].type]??command.params[param].type}) ${command.params[param].description}\n`;
             }

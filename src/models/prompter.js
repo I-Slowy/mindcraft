@@ -79,7 +79,9 @@ export class Prompter {
         if (this.profile.embedding) {
             try {
                 embedding_model_profile = selectAPI(this.profile.embedding);
+                console.log(`[${name}] Using configured embedding: ${embedding_model_profile.api}/${embedding_model_profile.model || 'default'}`);
             } catch (e) {
+                console.warn(`[${name}] Failed to load embedding config, using fallback:`, e.message);
                 embedding_model_profile = null;
             }
         }
@@ -88,6 +90,7 @@ export class Prompter {
         }
         else {
             this.embedding_model = createModel({api: chat_model_profile.api});
+            console.log(`[${name}] Using fallback embedding: ${chat_model_profile.api} (default model)`);
         }
 
         this.skill_libary = new SkillLibrary(agent, this.embedding_model);
@@ -168,19 +171,19 @@ export class Prompter {
         if (prompt.includes('$TO_SUMMARIZE'))
             prompt = prompt.replaceAll('$TO_SUMMARIZE', stringifyTurns(to_summarize));
         if (prompt.includes('$CONVO'))
-            prompt = prompt.replaceAll('$CONVO', 'Recent conversation:\n' + stringifyTurns(messages));
+            prompt = prompt.replaceAll('$CONVO', 'Conversa recente:\n' + stringifyTurns(messages));
         if (prompt.includes('$SELF_PROMPT')) {
             // if active or paused, show the current goal
-            let self_prompt = !this.agent.self_prompter.isStopped() ? `YOUR CURRENT ASSIGNED GOAL: "${this.agent.self_prompter.prompt}"\n` : '';
+            let self_prompt = !this.agent.self_prompter.isStopped() ? `SEU OBJETIVO ATUAL ATRIBUÍDO: "${this.agent.self_prompter.prompt}"\n` : '';
             prompt = prompt.replaceAll('$SELF_PROMPT', self_prompt);
         }
         if (prompt.includes('$LAST_GOALS')) {
             let goal_text = '';
             for (let goal in last_goals) {
                 if (last_goals[goal])
-                    goal_text += `You recently successfully completed the goal ${goal}.\n`
+                    goal_text += `Você completou com sucesso recentemente o objetivo ${goal}.\n`
                 else
-                    goal_text += `You recently failed to complete the goal ${goal}.\n`
+                    goal_text += `Você falhou recentemente ao completar o objetivo ${goal}.\n`
             }
             prompt = prompt.replaceAll('$LAST_GOALS', goal_text.trim());
         }
@@ -192,6 +195,25 @@ export class Prompter {
                 }
                 prompt = prompt.replaceAll('$BLUEPRINTS', blueprints.slice(0, -2));
             }
+        }
+        if (prompt.includes('$LANGUAGE')) {
+            let lang = String(settings.language || 'en').toLowerCase();
+            let language_instruction = '';
+            if (lang && lang !== 'en' && lang !== 'english') {
+                // Get language name from code (e.g., 'pt' -> 'Portuguese', 'pt-BR' -> 'Brazilian Portuguese')
+                const langNames = {
+                    'pt': 'Portuguese', 'pt-br': 'Brazilian Portuguese', 'pt-pt': 'European Portuguese',
+                    'es': 'Spanish', 'es-es': 'Spanish (Spain)', 'es-mx': 'Spanish (Mexico)',
+                    'fr': 'French', 'de': 'German', 'it': 'Italian', 'ru': 'Russian',
+                    'ja': 'Japanese', 'ko': 'Korean', 'zh': 'Chinese', 'zh-cn': 'Simplified Chinese',
+                    'zh-tw': 'Traditional Chinese', 'ar': 'Arabic', 'hi': 'Hindi'
+                };
+                const langName = langNames[lang] || lang.toUpperCase();
+                language_instruction = `IMPORTANT: You must communicate with players in ${langName} (${lang}). However, all commands (like !commandName) and code blocks must remain in English. Use ${langName} only for conversational text with players.`;
+            } else {
+                language_instruction = 'You communicate in English.';
+            }
+            prompt = prompt.replaceAll('$LANGUAGE', language_instruction);
         }
 
         // check if there are any remaining placeholders with syntax $<word>

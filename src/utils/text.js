@@ -2,11 +2,11 @@ export function stringifyTurns(turns) {
     let res = '';
     for (let turn of turns) {
         if (turn.role === 'assistant') {
-            res += `\nYour output:\n${turn.content}`;
+            res += `\nSua saída:\n${turn.content}`;
         } else if (turn.role === 'system') {
-            res += `\nSystem output: ${turn.content}`;
+            res += `\nSaída do sistema: ${turn.content}`;
         } else {
-            res += `\nUser input: ${turn.content}`;
+            res += `\nEntrada do usuário: ${turn.content}`;
         
         }
     }
@@ -51,7 +51,7 @@ export function strictFormat(turns) {
         }
         if (msg.role === 'system') {
             msg.role = 'user';
-            msg.content = 'SYSTEM: ' + msg.content;
+            msg.content = 'SISTEMA: ' + msg.content;
         }
         if (msg.role === prev_role && msg.role === 'assistant') {
             // insert empty user message to separate assistant messages

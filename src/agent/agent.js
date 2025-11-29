@@ -10,7 +10,6 @@ import { NPCContoller } from './npc/controller.js';
 import { MemoryBank } from './memory_bank.js';
 import { SelfPrompter } from './self_prompter.js';
 import convoManager from './conversation.js';
-import { handleTranslation, handleEnglishTranslation } from '../utils/translator.js';
 import { addBrowserViewer } from './vision/browser_viewer.js';
 import { serverProxy, sendOutputToServer } from './mindserver_proxy.js';
 import settings from './settings.js';
@@ -157,8 +156,8 @@ export class Agent {
                     console.warn('received whisper from other bot??')
                 }
                 else {
-                    let translation = await handleEnglishTranslation(message);
-                    this.handleMessage(username, translation);
+                    // Message is used directly without translation - AI will handle language in prompts
+                    this.handleMessage(username, message);
                 }
             } catch (error) {
                 console.error('Error handling message:', error);
@@ -280,8 +279,7 @@ export class Agent {
         if (from_other_bot)
             this.last_sender = source;
 
-        // Now translate the message
-        message = await handleEnglishTranslation(message);
+        // Message is used directly without translation - AI will handle language in prompts
         console.log('received message from', source, ':', message);
 
         const checkInterrupt = () => this.self_prompter.shouldInterrupt(self_prompt) || this.shut_up || convoManager.responseScheduledFor(source);
@@ -292,7 +290,7 @@ export class Agent {
             if (behavior_log.length > MAX_LOG) {
                 behavior_log = '...' + behavior_log.substring(behavior_log.length - MAX_LOG);
             }
-            behavior_log = 'Recent behaviors log: \n' + behavior_log;
+            behavior_log = 'Registro de comportamentos recentes: \n' + behavior_log;
             await this.history.add('system', behavior_log);
         }
 
@@ -321,7 +319,7 @@ export class Agent {
                 this.history.add(this.name, res);
                 
                 if (!commandExists(command_name)) {
-                    this.history.add('system', `Command ${command_name} does not exist.`);
+                    this.history.add('system', `Comando ${command_name} não existe.`);
                     console.warn('Agent hallucinated command:', command_name)
                     continue;
                 }
@@ -390,15 +388,7 @@ export class Agent {
     }
 
     async openChat(message) {
-        let to_translate = message;
-        let remaining = '';
-        let command_name = containsCommand(message);
-        let translate_up_to = command_name ? message.indexOf(command_name) : -1;
-        if (translate_up_to != -1) { // don't translate the command
-            to_translate = to_translate.substring(0, translate_up_to);
-            remaining = message.substring(translate_up_to);
-        }
-        message = (await handleTranslation(to_translate)).trim() + " " + remaining;
+        // Message is sent directly without translation - AI generates responses in the configured language
         // newlines are interpreted as separate chats, which triggers spam filters. replace them with spaces
         message = message.replaceAll('\n', ' ');
 
@@ -409,7 +399,7 @@ export class Agent {
         }
         else {
             if (settings.speak) {
-                speak(to_translate, this.prompter.profile.speak_model);
+                speak(message, this.prompter.profile.speak_model);
             }
             if (settings.chat_ingame) {this.bot.chat(message);}
             sendOutputToServer(this.name, message);
